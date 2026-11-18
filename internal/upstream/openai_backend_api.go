@@ -221,7 +221,11 @@ func preparePayload(model string, hints []string, mimeTypes []string, uploadIDs 
 	if len(mimeTypes) > 0 {
 		body["attachment_mime_types"] = mimeTypes
 	}
-	if len(uploadIDs) > 0 {
+	// The upstream prepare endpoint currently rejects three or more upload IDs
+	// with HTTP 422. This is optional preflight metadata: omit it for larger
+	// batches while keeping every image pointer and attachment in the actual
+	// conversation payload.
+	if len(uploadIDs) > 0 && len(uploadIDs) <= 2 {
 		body["prepare_image_upload_ids"] = uploadIDs
 	}
 	return body

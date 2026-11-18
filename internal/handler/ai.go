@@ -1075,7 +1075,9 @@ func writeImageError(c *gin.Context, err error) {
 	}
 	message := err.Error()
 	lower := strings.ToLower(message)
-	if strings.Contains(lower, "backend-api/") || strings.Contains(lower, "status=") || strings.Contains(lower, "body=") || strings.Contains(lower, "chatgpt.com") || strings.Contains(lower, "upstreamhttperror") {
+	if code == "upstream_prepare_rejected" {
+		message = "上游拒绝了会话准备参数（HTTP 400/422），尚未提交图片生成。请检查上游接口兼容性。"
+	} else if strings.Contains(lower, "backend-api/") || strings.Contains(lower, "status=") || strings.Contains(lower, "body=") || strings.Contains(lower, "chatgpt.com") || strings.Contains(lower, "upstreamhttperror") {
 		message = "The image generation request failed. Please try again later."
 	}
 	c.JSON(status, gin.H{"error": gin.H{"message": message, "type": errorType, "param": param, "code": code}})

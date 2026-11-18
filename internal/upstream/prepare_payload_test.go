@@ -2,12 +2,13 @@ package upstream
 
 import (
 	"reflect"
+	"strconv"
 	"testing"
 )
 
 func TestPreparePayloadImageUploadIDBatchLimit(t *testing.T) {
 	for _, count := range []int{0, 1, 2, 3, 4, 10} {
-		t.Run(string(rune('0'+count)), func(t *testing.T) {
+		t.Run(strconv.Itoa(count), func(t *testing.T) {
 			ids := make([]string, count)
 			for i := range ids {
 				ids[i] = "upload-" + string(rune('a'+i))

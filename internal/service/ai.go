@@ -323,7 +323,7 @@ func (s *AIService) generateImage(ctx context.Context, request ImageRequest, cal
 	if err != nil {
 		imageErr := newImageError(err)
 		imageErr.ConversationID, imageErr.AccountEmail = conversationID, email
-		return ImageResult{}, imageErr.Code != "content_policy_violation", imageErr
+		return ImageResult{}, imageErr.Code != "content_policy_violation" && imageErr.Code != "upstream_prepare_rejected", imageErr
 	}
 	stored, err := s.images.Save(ctx, data, request.BaseURL)
 	if err != nil {
@@ -401,6 +401,15 @@ func newImageError(err error) *ImageError {
 	var imageErr *ImageError
 	if errors.As(err, &imageErr) {
 		return imageErr
+	}
+	var upstreamErr *chatgpt.UpstreamHTTPError
+	if errors.As(err, &upstreamErr) &&
+		upstreamErr.Context == "/backend-api/f/conversation/prepare" &&
+		(upstreamErr.StatusCode == 400 || upstreamErr.StatusCode == 422) {
+		return &ImageError{
+			Err: errors.New("上游拒绝了会话准备参数（HTTP 400/422），尚未提交图片生成"),
+			Status: 422, Type: "invalid_request_error", Code: "upstream_prepare_rejected",
+		}
 	}
 	message := strings.ToLower(err.Error())
 	if strings.Contains(message, "图片额度") || strings.Contains(message, "no available") && strings.Contains(message, "image quota") {
